@@ -1,0 +1,26 @@
+
+ZC Audio File Creation Notes:
+
+
+
+Open MP3 in Audacity
+
+Tracks-->Mix-->Mix Stereo Down to Mono
+
+Select All
+
+Remove some bass (Effect-->Equalization... set to of line to 150 Hz, rolloff to 100 Hz)
+
+;Clip audio (Effect-->Amplify, click "Allow Clipping", set Amplification to 50)
+
+Change track bitrate (File-->Tracks-->Resample...) to 7100 Hz
+
+Change project bitrate (bottom left corner) to 7100 Hz
+
+Export File-->Export-->Export as WAV, select WAV (Microsoft) signed 16-bit PCM
+
+Hit "Clear" on Edit Metadata Tags window, then "OK"
+
+
+Drop exported WAV into disk image. Run BASIC program.
+
