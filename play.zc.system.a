@@ -115,6 +115,11 @@ GetAttributes
 
          lda   C4_Parms+4 ; file_type
          cmp   #$5B       ; must be  -----Filetype for Sound? Also check auxtype for playback speed
+
+
+;Filetype for sampled sound is $D8. For both ZC and ANM/$5B, make sure top byte of auxtype is $10 since there are existing files with that main type, with aux $00xx and $80xx
+
+
          beq   SetType
          jmp   Exit+Reloc ; we haven't relocated yet
 
