@@ -44,8 +44,8 @@
 
 ; TODO:
 ; Implement BASIS.SYSTEM
-; Compute file size on load (EOF tracking)
-; check for correct filetype (which is?)
+; Compute file size on load (EOF tracking)  idea: shift load address mid-page on final chunk so audio core stays balanced
+; check for correct filetype (which is?) $100x
 ; set playback speed to auxtype
 ; Save //gs speed on load - set slow to play - restore on exit
 ; //gs text page 2 fix - detect if Alternate Screen Mode is on
