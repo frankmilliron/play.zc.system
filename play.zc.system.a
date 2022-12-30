@@ -81,9 +81,10 @@ KeyStrobe      = $C010    ; clear keyboard strobe
 Speaker        = $C030    ; toggle speaker output
 Page2          = $C055    ; show text/graphics page 2
 
+ROM_Text2Copy  = $F962    ; turn on alternate display mode on IIgs
 ROM_Text       = $FB2F    ; exit graphics mode, set page 1
 ROM_Home       = $FC58    ; clear text screen 1
-
+ROM_Wait       = $FCA8    ; not critical, only used for VBL check on //gs
 
 
 ; ****************************************************************
@@ -143,7 +144,6 @@ ProRWTS2 jsr   init       ; sets up ProRWTS2, relocates itself to $1000
          lda   #0
          sta   ldrlo
          sta   sizelo
-         sta   auxreq
 
 RelocPlayer
          ldy   #0         ; total < $400 bytes
@@ -182,25 +182,10 @@ C4_Parms                  ; GET_FILE_INFO ($C4) Parameters   --- will need to co
 Relocated
 !pseudopc Reloc {
 
-         jsr   EmuTest
-         jsr   TestGS
          jsr   SetReset
 
 
 
-
-
-
-
-
-
-
-
-
-
-; ****************************************************************
-; *                     Zero-Crossing Player                     *
-; ****************************************************************
 
 Setup    lda   #$00       ; start address (low byte)
          sta   GetNote+6
@@ -211,11 +196,6 @@ Setup    lda   #$00       ; start address (low byte)
          sta   StopAddr+1
          lda   #Speed     ; playback speed
          sta   SameByte+2
-
-ClrPg1   ;jsr   ROM_Home   ; turn page 1 black
-         ;bit   $C050
-         ;bit   $C057
-         ;bit   $C053      ; new mixed hires visualizer
 
          lda   #$20       ; turn page 2 white
          ldx   #$77
@@ -229,6 +209,19 @@ ClrPg2   sta   $800,x     ; preserve screen holes on page 2
          sta   $b80,x
          dex
          bpl   ClrPg2
+
+
+
+
+
+
+
+
+; ****************************************************************
+; *                     Zero-Crossing Player                     *
+; ****************************************************************
+
+
 
          jmp   GetNote    ; X=0 here
 
@@ -398,51 +391,6 @@ Exit3    jmp   Exit
 
 
 ; ****************************************************************
-; *                  Emulator-specific Routines                  *
-; ****************************************************************
-
-EmuTest  ldx   #$FF       ; Test floating bus 255 times
-         lda   #0
-         sta   EmuVar     ; zero out count of positive tests
-Emu1     sta   SS_Float   ; tickle Sweet16
-         lda   SS_Float   ; load value from bus
-         cmp   #0         ; Virtual ][? (always returns $00)
-         beq   Emu3
-         cmp   #$16       ; Sweet16? (returns $16 when tickled, $30 otherwise)
-         beq   Emu3
-Emu2     dex              ; keep counting
-         cpx   #0
-         beq   Emu4       ; done with 255 tests yet?
-         jmp   Emu1       ; If not, keep going
-Emu3     inc   EmuVar     ; found potential emulator, increment count
-         jmp   Emu2
-Emu4     lda   EmuVar     ; load counts
-         cmp   #$FF       ; 255 tests of 255 runs positive for emulation?
-         beq   EmuFix     ; if yes, patch the code
-         rts              ; otherwise, just exit cuz we're on "normal" "hardware"
-
-EmuFix   lda   #$4C       ; JMP
-         sta   PageFlip
-         lda   #<EmuWait  ; set branch from normal playback routine
-         sta   PageFlip+1 ; during page flipping operations
-         lda   #>EmuWait  ; (which emulators can't display properly)
-         sta   PageFlip+2 ; to slightly revised EmuWait routine.
-         lda   #5         ; number of times to wait
-         sta   EmuVar     ; playback speed variable
-         rts
-
-EmuWait  ldx   EmuVar     ; wait for 6 vertical blank periods (10fps)
-
-EmuVBL   jsr   TestVBL    ; sync next vertical blank period
-         dex
-         bpl   EmuVBL     ; do it till X = zero (remove to EMUWAIT with audio)
-         bit   SS_Page1   ; always show Page 1
-         lda   VidSize
-         sta   ldrhi      ; always load to page 1
-         jmp   ChkKey     ; Resume playback using PLAY after keypress check
-
-
-; ****************************************************************
 ; *                    //gs-specific routines                    *
 ; ****************************************************************
 
@@ -452,18 +400,23 @@ TestGS   sec
          clc
          rts              ; not a //gs, just exit
 
-SetGS    lda   #0
-         sta   SS_Border  ; turn border color black       --uses text page 2
-
-         lda   SS_Speed
-         and   #%01111111
-         sta   SS_Speed   ; sets processor speed to normal
-
-         lda   #$30       ; swap BPL for BMI
-         sta   VBLon+3
-         lda   #$10       ; swap MBI for BPL
-         sta   VBLoff+3   ; //gs reverses VBL
-         rts
+SetGS    tya              ; GS ID routine returns with ROM version in Y
+         cmp   #0         ; ROM 0?
+         beq   ++
+         cmp   #1         ; ROM 1?
+         beq   ++
+         lda   #$20
+         sta   $0800      ; Alternate Display Mode already on?
+         lda   #$FF
+         jsr   ROM_Wait   ; skip a VBL cycle
+!cpu 65816
+         lda   $E00800    ; If yes, we shadow copied to bank $E0
+         cmp   #$20
+         beq   +          ; only call TEXT2COPY if we know it's off
+!cpu 6502                 ; https://archive.org/details/develop-04_9010_October_1990/page/n51/mode/1up
+         jsr   ROM_Text2Copy         ; set Alternate Display Mode on IIgs
++
+++       rts
 
 
 ; ****************************************************************
@@ -484,9 +437,9 @@ Exit     sta   KeyStrobe
          !word ExitParms
 
 ExitParms
-         !byte 4
+         !byte 4          ; 4 parameters
          !byte 0
-         !word 0
+         !word 0          ; none used
          !byte 0
          !word 0
 
