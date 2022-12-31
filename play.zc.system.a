@@ -20,7 +20,7 @@
 ; "acme zc.player.a" to assemble
 
 
-; ProDOS file format $D8 SND "sampled sound" (audio) files
+; ProDOS file format $D8 (SND) "Sampled Sound" audio files
 ; Ciderpress-style  #d810xx  (xx = Playback speed)
 ; #d81003 for default file playback
 
@@ -139,16 +139,16 @@ ProRWTS2 jsr   init       ; sets up ProRWTS2, relocates itself to $1000
          sta   namhi
          lda   #<VidName
          sta   namlo
-         lda   #1         ; cmdread
-         sta   reqcmd
-         lda   #0
-         sta   ldrlo
-         sta   sizelo
 
-RelocPlayer
-         ldy   #0         ; total < $400 bytes
+         ldy   #1         ; cmdread
+         sty   reqcmd
+         dey
+         sty   ldrlo
+         sty   sizelo
+
+RelocPlayer               ; y=0       
 -        lda   Relocated,y
-         sta   Reloc,y
+         sta   Reloc,y    ; total < $400 bytes
          lda   Relocated+$100,y
          sta   Reloc+$100,y
          lda   Relocated+$200,y
@@ -197,7 +197,7 @@ Setup    lda   #$00       ; start address (low byte)
          lda   #Speed     ; playback speed
          sta   SameByte+2
 
-         lda   #$20       ; turn page 2 white
+         lda   #$20       ; turn page 2 white for visualizer
          ldx   #$77
 ClrPg2   sta   $800,x     ; preserve screen holes on page 2
          sta   $880,x     ; //c and //c+ use them for serial port
@@ -221,9 +221,7 @@ ClrPg2   sta   $800,x     ; preserve screen holes on page 2
 ; *                     Zero-Crossing Player                     *
 ; ****************************************************************
 
-
-
-         jmp   GetNote    ; X=0 here
+ZC       jmp   GetNote    ; X=0 here
 
 SamePage ldy   #8         ; bits per byte
 
@@ -400,7 +398,14 @@ TestGS   sec
          clc
          rts              ; not a //gs, just exit
 
-SetGS    tya              ; GS ID routine returns with ROM version in Y
+SetGS    lda   #0
+         sta   SS_Border  ; turn border color black - store/restore?
+
+         lda   SS_Speed
+         and   #%01111111
+         sta   SS_Speed   ; sets processor speed to normal  - store/restore?
+
+TestADM  tya              ; GS ID routine returns with ROM version in Y
          cmp   #0         ; ROM 0?
          beq   ++
          cmp   #1         ; ROM 1?
@@ -423,7 +428,8 @@ SetGS    tya              ; GS ID routine returns with ROM version in Y
 ; *                           Goodbye!                           *
 ; ****************************************************************
 
-Exit     sta   KeyStrobe
+Exit     sei              ; turn off VBL interrupts
+         sta   KeyStrobe
          sta   SS_Main
          sta   SS_40col
          sta   SS_DblOff
