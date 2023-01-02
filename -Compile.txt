@@ -1,0 +1,4 @@
+cd /Volumes/TRANSFER/play.zc.system
+acme play.zc.system.a
+cadius DELETEFILE ZCJukebox2.2mg /ZCJKBX2/BASIS.SYSTEM
+cadius ADDFILE ZCJukebox2.2mg /ZCJKBX2 BASIS.SYSTEM#ff0000

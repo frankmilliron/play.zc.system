@@ -34,12 +34,17 @@
 ; #3 - 290,819 cycles - 141 cycles per bit - 7,186.51 Hz (*) Default
 ; #4 - 354,307 cycles - 173 cycles per bit - 5,898.75 Hz
 
-; Original COMPUTE! audio player at "4" = 7,482.65 Hz
+; Fun Fact 1: Original COMPUTE! audio player at "4" = 7,482.65 Hz
+
+; Fun Fact 2: 140k floppy can store roughly 2 1/2 minutes of audio at default setting
 
 
-; Fun Fact:
-; 140k floppy can store roughly 2 1/2 minutes of audio at default setting
-
+; Memory Map:
+; Player core relocated to $C00-1000 ($400)
+; ProRWTS2 installed to $1000-1300 ($300)
+; ProRWTS tree buffer $1300-1500 ($200)
+; ProRWTS block buffer $1700-1900 ($200)
+; Audio files loaded to $2000-BF00 ($9F00)
 
 
 ; TODO:
@@ -64,27 +69,45 @@
 ; *                           Constants                          *
 ; ****************************************************************
 
-KeyPressed     = $FF      ; key pressed during playback, 0 if end of data
+AudSpd         = $76
+KeyPressed     = $77
 
-AudSpd         = $??
+AudName        = $300     ; audio file to play
+Start          = $2000
+Stop           = $BF00    ; (40,704 bytes * 8 samples per byte / 7,186 Hz = 45 seconds)
+AudSize        = Stop - Start
 
-AudName        = $300     ; video file to play
-
-
-Start          = $C00     ; can go down to $C00
-Stop           = $BF00    ; ProDOS maximum under MLI
-
-Speed          = 3        ; see above table for sample rates
+Reloc          = $C00     ; audio player code relocated here
+MLI            = $BF00    ; ProDOS Machine Language Interface entry
 
 Keyboard       = $C000    ; get keypress
 KeyStrobe      = $C010    ; clear keyboard strobe
 Speaker        = $C030    ; toggle speaker output
+SS_Border      = $C034    ; set //gs border color
+SS_Speed       = $C036    ; set //gs processor speed
 Page2          = $C055    ; show text/graphics page 2
 
 ROM_Text2Copy  = $F962    ; turn on alternate display mode on IIgs
 ROM_Text       = $FB2F    ; exit graphics mode, set page 1
+ROM_Pwrup      = $FB6F    ; set reset vector checksum
 ROM_Home       = $FC58    ; clear text screen 1
 ROM_Wait       = $FCA8    ; not critical, only used for VBL check on //gs
+ROM_TestGS     = $FE1F    ; test for //gs
+
+
+
+;ProRWTS2-specific:
+auxreq         = $51      ; set to 0 to read to main memory
+sizelo         = $52      ; size of data to load
+sizehi         = $53      ; size of data to load
+reqcmd         = $54      ; set to 1 for cmdread
+ldrlo          = $55      ; address to load the data
+ldrhi          = $56      ; address to load the data
+namlo          = $57      ; name of file to access
+namhi          = $58      ; name of file to access
+treeidx        = $5B      ; tree index
+blkindx        = $F8      ; block index
+;hddrdwrpart    = $1000    ; read part of file
 
 
 ; ****************************************************************
@@ -96,14 +119,15 @@ ROM_Wait       = $FCA8    ; not critical, only used for VBL check on //gs
 ; 2) The filename of the selected file stored at $2006
 ; 3) $280 is set to the name of the root volume
 ; 4) $380 is set to the name of the launched SYS file (ie, /VOL/BASIS.SYSTEM)
+; NOTE: Bitsy Bye may leave some of the paths lowercased and high bits set (!)
 
-         jmp   Start
+         jmp   Begin
 
          !hex  EE EE      ; signifies launchable prodos file
          !byte $41        ; prodos path buffer length (65 bytes)
          !fill 65,0       ; prodos full path buffer
 
-Start    sta   KeyStrobe  ; clear stray keypresses
+Begin    sta   KeyStrobe  ; clear stray keypresses
          ;jsr   ROM_Home
 
 MoveFilename              ; (should be at address $2047 here)
@@ -131,20 +155,26 @@ AuxType  lda   C4_Parms+6 ; high byte of aux_type must be $10 ($10xx)
          beq   SetType
          jmp   Exit+Reloc ; we haven't relocated yet
 SetType  lda   C4_Parms+5 ; low byte of aux_type is playback speed (see table)
-         sta   AudType
+         sta   AudSpd
 
 ProRWTS2 jsr   init       ; sets up ProRWTS2, relocates itself to $1000
 
-         lda   #>VidName
+         lda   #>AudName
          sta   namhi
-         lda   #<VidName
+         lda   #<AudName
          sta   namlo
+
+         lda   #>AudSize  ; load some bytes  ---check for EOF here
+         sta   sizehi
+         lda   #$20       ; do it starting at $2000
+         sta   ldrhi
 
          ldy   #1         ; cmdread
          sty   reqcmd
          dey
          sty   ldrlo
          sty   sizelo
+         sty   auxreq
 
 RelocPlayer               ; y=0       
 -        lda   Relocated,y
@@ -161,7 +191,7 @@ RelocPlayer               ; y=0
 
 C4_Parms                  ; GET_FILE_INFO ($C4) Parameters   --- will need to copy to Reloc
          !byte   $0a      ; param_count
-         !word   VidName  ; pathname
+         !word   AudName  ; pathname
          !byte   0        ; access
          !byte   0        ; file_type
          !word   0        ; aux_type
@@ -188,13 +218,14 @@ Relocated
 
 
 Setup    lda   #$00       ; start address (low byte)
+  sta auxreq
          sta   GetNote+6
-         sta   KeyPressed
+         ;sta   KeyPressed
          lda   #>Start    ; start address (high byte)
          sta   GetNote+7
          lda   #>Stop     ; stop address (high byte)
          sta   StopAddr+1
-         lda   #Speed     ; playback speed
+         lda   AudSpd     ; playback speed
          sta   SameByte+2
 
          lda   #$20       ; turn page 2 white for visualizer
@@ -211,17 +242,55 @@ ClrPg2   sta   $800,x     ; preserve screen holes on page 2
          bpl   ClrPg2
 
 
+; ****************************************************************
+; *                      Load Audio Segment                      *
+; ****************************************************************
+
+         lda   #>AudSize  ; load some bytes  ---check for EOF here
+         sta   sizehi
+         lda   #$20       ; do it starting at $2000
+         sta   ldrhi
+
+         jsr   hddopendir ; open for read, load first segment
+
+         jmp   ZCPlay     ; play loaded segment
 
 
 
+Loader   lda   #>AudSize  ; load some bytes  ---check for EOF here
+         sta   sizehi
+         lda   #$20       ; do it starting at $2000
+         sta   ldrhi
 
+
+         lda   #$00       ; start address (low byte) ---section copied from Setup
+  sta auxreq
+         sta   GetNote+6
+         ;sta   KeyPressed
+         lda   #>Start    ; start address (high byte)
+         sta   GetNote+7
+         lda   #>Stop     ; stop address (high byte)
+         sta   StopAddr+1
+         lda   AudSpd     ; playback speed
+         sta   SameByte+2
+
+
+
+         jsr   hddrdwrpart ; load next segment
+
+         jmp   ZCPlay     ; play loaded segment
+
+
+         jmp   Loader     ; again till end
+
+Exit1    jmp   Exit
 
 
 ; ****************************************************************
 ; *                     Zero-Crossing Player                     *
 ; ****************************************************************
 
-ZC       jmp   GetNote    ; X=0 here
+ZCPlay   jmp   GetNote    ; X=0 here
 
 SamePage ldy   #8         ; bits per byte
 
@@ -266,7 +335,7 @@ GetNote  lda   Keyboard   ; check for keypress
          lda   GetNote+7
 StopAddr cmp   #$d1       ; stop address  **self-modified!
          bne   SamePage
-         beq   Exit1
+         beq   Loader
 
 SameByte1
          cmp   $44,x      ; 4  even out cycle count
@@ -311,7 +380,7 @@ Key      sta   KeyStrobe
 Rew      cmp   #$88       ; left arrow key pressed? ($08+80)
          bne   FastFor
          ldx   treeidx
-         beq   Play       ; if treeidx is already 0 don't rewind
+         beq   Pause2     ; if treeidx is already 0 don't rewind
          dex
          beq   Rew1       ; if it's 1, decrement 1
          dex              ; otherwise decrement 2
@@ -324,7 +393,7 @@ FastFor  cmp   #$95       ; right arrow key pressed? ($15+80)
          jmp   DoReset1
 
 Pause    cmp   #$A0       ; space Bar pressed? ($20+80)
-         bne   Single
+         bne   Esc
 Pause1   lda   Keyboard
          bpl   Pause1     ; test for second keypress
          cmp   #$9B       ; escape key pressed? ($1B+80)
@@ -334,21 +403,11 @@ Pause1   lda   Keyboard
          bit   KeyStrobe
          jmp   Pause1
 Pause2   bit   KeyStrobe
-         jmp   Play
-
-Single   cmp   #$B1       ; "1" key pressed? ($31+80)
-         bne   Double
-         bit   SS_DblOff  ; turn off double graphics mode
-         jmp   Play
-
-Double   cmp   #$B2       ; "2" key pressed? ($32+80)
-         bne   Esc
-         bit   SS_DblOn   ; turn on double graphics mode
-         jmp   Play
+         jmp   ZCPlay
 
 Esc      cmp   #$9B       ; escape key pressed? ($1B+80)
          beq   Exit2
-         jmp   Play
+         rts
 
 Exit2    jmp   Exit
 
@@ -372,18 +431,18 @@ SetReset lda   #<DoReset
 
 DoReset  sta   KeyStrobe
          jsr   TestGS     ; re-setup //gs border color & speed
-         jsr   Grfx
+         ;jsr   Grfx
          lda   treeidx
          beq   DoReset1   ; already at the beginning, don't adjust
          dec   treeidx    ; play last section again
 DoReset1 lda   #0         ; set load to main memory
          sta   auxreq
          sta   blkindx    ; clear entries
-         lda   VidSize
+         lda   AudSize
          sta   sizehi
          jsr   hddrdwrpart
          bcs   Exit3
-         jmp   Play
+         jmp   ZCPlay
 
 Exit3    jmp   Exit
 
@@ -428,11 +487,11 @@ TestADM  tya              ; GS ID routine returns with ROM version in Y
 ; *                           Goodbye!                           *
 ; ****************************************************************
 
-Exit     sei              ; turn off VBL interrupts
+Exit     ;sei              ; turn off VBL interrupts
          sta   KeyStrobe
-         sta   SS_Main
-         sta   SS_40col
-         sta   SS_DblOff
+         ;sta   SS_Main
+         ;sta   SS_40col
+         ;sta   SS_DblOff
 
          jsr   ROM_Text
          jsr   ROM_Home
@@ -459,18 +518,5 @@ EndReloc
 
          !source "prorwts2.a"
 
-         !warn "Relocated code is ", EndReloc-Reloc, "bytes. Must be less than $400."
-
-
-
-
-
-
-
-
-         !if * > $3F0 {
-         !error "code is too large, ends at ", *
-         }
-
-
+         ;!warn "Relocated code is ", EndReloc-Reloc, "bytes. Must be less than $400."
 
