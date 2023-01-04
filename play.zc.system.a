@@ -2,18 +2,18 @@
 ; play.zc.system.a
 
 ; Play "zero crossing" 1-bit audio files with visualization
-; December 26, 2022
-; (c) 2022 by Frank Milliron, Lombard $oftware
+; January 1, 2023
+; (c) 2023 by Frank Milliron, Lombard $oftware
 ; https://github.com/frankmilliron/play.zc.system
 
 ; Original inspiration was the audio recorder/player from
 ; COMPUTE! Magazine - Issue 88 / September 1987 / Page 86
 
-; Re-worked version by Peter Ferrie/qkumba
+; Re-worked cycle-balanced version by Peter Ferrie/qkumba
 ; comp.sys.apple.2 - July 13, 2017
 ; https://groups.google.com/g/comp.sys.apple2.programmer/c/6MwH7Crkbbg/m/oU6NOZbqAQAJ
 
-; Bugfix version December 2022: The CMP ($00,X) instruction can accidentally
+; Bugfix version January 1, 2023: The CMP ($00,X) instruction can accidentally
 ; access softswitches, so has been replaced with 3 nops, at the expense of 1 byte.
 ; For compatibility with //gs, a non-ROM wait routine has also been added.
 
@@ -48,11 +48,10 @@
 
 
 ; TODO:
-; Implement BASIS.SYSTEM
 ; Compute file size on load (EOF tracking)  idea: shift load address mid-page on final chunk so audio core stays balanced
 ; check for correct filetype (which is?) $100x
 ; set playback speed to auxtype
-; Save //gs speed on load - set slow to play - restore on exit
+; Save //gs accelerator speed on load - set slow to play - restore on exit
 ; //gs text page 2 fix - detect if Alternate Screen Mode is on
 
 
@@ -87,7 +86,7 @@ SS_Border      = $C034    ; set //gs border color
 SS_Speed       = $C036    ; set //gs processor speed
 Page2          = $C055    ; show text/graphics page 2
 
-ROM_Text2Copy  = $F962    ; turn on alternate display mode on IIgs
+ROM_Text2Copy  = $F962    ; turn on alternate display mode on //gs
 ROM_Text       = $FB2F    ; exit graphics mode, set page 1
 ROM_Pwrup      = $FB6F    ; set reset vector checksum
 ROM_Home       = $FC58    ; clear text screen 1
@@ -121,13 +120,14 @@ blkindx        = $F8      ; block index
 ; 4) $380 is set to the name of the launched SYS file (ie, /VOL/BASIS.SYSTEM)
 ; NOTE: Bitsy Bye may leave some of the paths lowercased and high bits set (!)
 
-         jmp   Begin
+         jmp   BASIS
 
          !hex  EE EE      ; signifies launchable prodos file
          !byte $41        ; prodos path buffer length (65 bytes)
          !fill 65,0       ; prodos full path buffer
 
-Begin    sta   KeyStrobe  ; clear stray keypresses
+BASIS                     ; *=$2047
+         sta   KeyStrobe  ; clear stray keypresses
          ;jsr   ROM_Home
 
 MoveFilename              ; (should be at address $2047 here)
@@ -146,7 +146,7 @@ GetAttributes
          !byte $C4        ; get file attributes
          !word C4_Parms
 
-         lda   C4_Parms+4 ; file_type must be $D8 (xxxxx) "Sampled Sound"
+         lda   C4_Parms+4 ; file_type must be $D8 "Sampled Sound"
          cmp   #$D8
          beq   AuxType
          jmp   Exit+Reloc ; we haven't relocated yet
@@ -264,7 +264,7 @@ Loader   lda   #>AudSize  ; load some bytes  ---check for EOF here
 
 
          lda   #$00       ; start address (low byte) ---section copied from Setup
-  sta auxreq
+         sta   auxreq     ; main mem only
          sta   GetNote+6
          ;sta   KeyPressed
          lda   #>Start    ; start address (high byte)
