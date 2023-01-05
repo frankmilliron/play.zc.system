@@ -53,6 +53,8 @@
 ; set playback speed to auxtype
 ; Save //gs accelerator speed on load - set slow to play - restore on exit
 ; //gs text page 2 fix - detect if Alternate Screen Mode is on
+; show info about song - Filename, File type, Playback speed, Current offset
+; key to toggle hires split screen / text visualizer?
 
 
 

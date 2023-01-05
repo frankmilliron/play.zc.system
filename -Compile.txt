@@ -1,4 +1,51 @@
-cd /Volumes/TRANSFER/play.zc.system
+
+setopt interactivecomments
+# allows comments pasting into zsh (sometimes)
+
+
+# delete any old versions
+rm ~/Desktop/ZCJukebox2.hdv
+
+
+# set up new disk image
+unzip /Volumes/TRANSFER/A2\ Disk\ Images/blank32mb.hdv.zip -d ~/Desktop
+mv ~/Desktop/blank.hdv ~/Desktop/ZCJukebox2.hdv
+cadius RENAMEVOLUME ~/Desktop/ZCJukebox2.hdv ZCJKBX2
+
+
+# add all audio files in folder
+cd /Volumes/TRANSFER/New\ ZC\ Audio\ Files/3\ -\ ZC\ Audio\ Files
+ls -1 *#D810* | sort | while read fn ; do cadius ADDFILE ~/Desktop/ZCJukebox2.hdv /ZCJKBX2 "$fn"; done
+cd /Volumes/TRANSFER/New\ ZC\ Audio\ Files/_All\ 2018\ ZC\ Files
+ls -1 *#D810* | sort | while read fn ; do cadius ADDFILE ~/Desktop/ZCJukebox2.hdv /ZCJKBX2 "$fn"; done
+
+
+# add QUIT.SYSTEM to drop to BitsyBye on boot
+cadius ADDFILE ~/Desktop/ZCJukebox2.hdv /ZCJKBX2 /Volumes/TRANSFER/A2_Binaries/QUIT.SYSTEM#FF2000
+
+
+# compile audio player & add it
+cd /Volumes/TRANSFER/play.zc.system/
 acme play.zc.system.a
-cadius DELETEFILE ZCJukebox2.2mg /ZCJKBX2/BASIS.SYSTEM
-cadius ADDFILE ZCJukebox2.2mg /ZCJKBX2 BASIS.SYSTEM#ff0000
+cadius ADDFILE ~/Desktop/ZCJukebox2.hdv /ZCJKBX2 BASIS.SYSTEM#ff0000
+
+
+# add PRODOS to make it bootable
+cadius ADDFILE ~/Desktop/ZCJukebox2.hdv /ZCJKBX2 /Volumes/TRANSFER/A2_Binaries/PRODOS#FF0000
+
+
+#cadius CHECKVOLUME ~/Desktop/ZCJukebox2.hdv
+cadius CATALOG ~/Desktop/ZCJukebox2.hdv
+
+
+# open new disk image in Virtual ][
+osascript -e 'tell app "Virtual ][" to close every machine saving no'
+osascript -e 'tell app "Virtual ][" to open "/Users/Frank/Library/Application Support/Virtual ][/DefaultConfig.vii"'
+osascript -e 'tell app "Virtual ][" to insert "/Users/Frank/Desktop/ZCJukebox2.hdv" into device "S7D1" of front machine'
+osascript -e 'tell app "Virtual ][" to type line "PR#7"'
+osascript -e 'tell app "Virtual ][" to activate'
+
+
+# close Terminal window
+#exit
+
