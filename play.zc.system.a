@@ -141,7 +141,7 @@ BASIS                     ; *=$2047
          bpl   -
 
          ldx   #35-1
--        lda   Info4,x
+-        lda   Info4,x    ; show more info
          sta   $6A9,x
          lda   Info5,x
          sta   $7A9,x
@@ -149,9 +149,6 @@ BASIS                     ; *=$2047
          sta   $4D1,x
          dex
          bpl   -
-
-
-
 
 MoveFilename
          ldy   $2006      ; copy filename from $2006 to $300
@@ -172,25 +169,52 @@ GetAttributes
          jsr   MLI
          !byte $C4        ; get file attributes
          !word InfoParms
+;         bcs   Error
 
          lda   InfoParms+4 ; file_type must be $D8 "Sampled Sound"
          cmp   #$D8
          beq   AuxType
-         jmp   Exit+Reloc ; we haven't relocated yet
+         jmp   Exit+Reloc ; since we haven't relocated yet
 AuxType  lda   InfoParms+6 ; high byte of aux_type must be $10 ($10xx)
          cmp   #$10
          beq   SetType
-         jmp   Exit+Reloc ; we haven't relocated yet
-SetType  lda   InfoParms+5 ; low byte of aux_type is playback speed (see table)
+         jmp   Exit+Reloc ; since we haven't relocated yet
+
+SetType  lda   InfoParms+5 ; low byte of aux_type is playback speed (see table)  ---20b3
          sta   AudSpd
 
+         cmp   #1
+         beq   PrintSpd   ; default sample rate
+         cmp   #2
+         beq   Setup2
+         cmp   #3
+         beq   Setup3
+         cmp   #4
+         beq   Setup4
+         jmp   Exit
 
-ldx #18-1
-- lda Info7,x     ; fix!!!
-sta $7B9,x         ; print audio playback speed
-dex
-bpl -
+Setup2   lda   #<Info8
+         sta   PrintSpd+3
+         lda   #>Info8
+         sta   PrintSpd+4
+         jmp   PrintSpd
 
+Setup3   lda   #<Info9
+         sta   PrintSpd+3 ; change to new sample rate text
+         lda   #>Info9
+         sta   PrintSpd+4
+         jmp   PrintSpd
+
+Setup4   lda   #<Info10
+         sta   PrintSpd+3
+         lda   #>Info10
+         sta   PrintSpd+4
+
+PrintSpd ldx   #18-1
+-        lda   Info7,x    ; **self-modified!
+         sta   $7B6,x     ; show playback sample rate
+         dex
+         bpl   -
 
 ProRWTS2 jsr   init       ; sets up ProRWTS2, relocates itself to $1000
 
@@ -243,7 +267,7 @@ Info1    !text "PLAY.ZC.SYSTEM "
 Info2    !text "============== "
 Info3    !text "File:          "                     ; filename to $5AF
 Info4    !text "Filetype: $D8 (SND) 'Sampled Sound'"
-Info5    !text "Playback Speed:                    "
+Info5    !text "Sample Rate:                       "
 Info6    !text "Now Playing Offset $               " ; offset #$ to $4E5
 
 Info7    !text "10,742 Hz (High)  "
