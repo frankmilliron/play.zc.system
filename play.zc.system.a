@@ -2,7 +2,7 @@
 ; play.zc.system.a
 
 ; Play "zero crossing" 1-bit audio files with visualization
-; January 1, 2023
+; January 9, 2023
 ; (c) 2023 by Frank Milliron, Lombard $oftware
 ; https://github.com/frankmilliron/play.zc.system
 
@@ -50,12 +50,10 @@
 ; TODO:
 ; Compute file size on load (EOF tracking)  idea: shift load address mid-page on final chunk so audio core stays balanced
 ; check for correct filetype (which is?) $100x
-; set playback speed to auxtype
 ; Save //gs accelerator speed on load - set slow to play - restore on exit
 ; //gs text page 2 fix - detect if Alternate Screen Mode is on
-; show info about song - Filename, File type, Playback speed, Current offset
 ; key to toggle hires split screen / text visualizer?
-
+; screen text on machines with no lowercase?
 
 
 
@@ -130,34 +128,69 @@ blkindx        = $F8      ; block index
 
 BASIS                     ; *=$2047
          sta   KeyStrobe  ; clear stray keypresses
-         ;jsr   ROM_Home
+         jsr   ROM_Home
 
-MoveFilename              ; (should be at address $2047 here)
-         ldy   #$41       ; copy filename from $2006 to $300 --could pickup length from buffer
+         ldx   #15-1
+-        lda   Info1,x    ; show info
+         sta   $429,x
+         lda   Info2,x
+         sta   $4A9,x
+         lda   Info3,x
+         sta   $5A9,x
+         dex
+         bpl   -
+
+         ldx   #35-1
+-        lda   Info4,x
+         sta   $6A9,x
+         lda   Info5,x
+         sta   $7A9,x
+         lda   Info6,x
+         sta   $4D1,x
+         dex
+         bpl   -
+
+
+
+
+MoveFilename
+         ldy   $2006      ; copy filename from $2006 to $300
 -        lda   $2006,y
          and   #$7F       ; strip high bit
          cmp   #$60       ; in lowercase range?
          bcc   ++         ; no, leave it alone
          and   #$DF       ; yes, make uppercase
 ++       sta   AudName,y
+         ora   #$80       ; Apple ASCII
+         sta   $5AE,y     ; filename to screen
          dey
          bpl   -
+         lda   #$A0       ; cheap fix for length byte
+         sta   $5AE
 
 GetAttributes
          jsr   MLI
          !byte $C4        ; get file attributes
-         !word C4_Parms
+         !word InfoParms
 
-         lda   C4_Parms+4 ; file_type must be $D8 "Sampled Sound"
+         lda   InfoParms+4 ; file_type must be $D8 "Sampled Sound"
          cmp   #$D8
          beq   AuxType
          jmp   Exit+Reloc ; we haven't relocated yet
-AuxType  lda   C4_Parms+6 ; high byte of aux_type must be $10 ($10xx)
+AuxType  lda   InfoParms+6 ; high byte of aux_type must be $10 ($10xx)
          cmp   #$10
          beq   SetType
          jmp   Exit+Reloc ; we haven't relocated yet
-SetType  lda   C4_Parms+5 ; low byte of aux_type is playback speed (see table)
+SetType  lda   InfoParms+5 ; low byte of aux_type is playback speed (see table)
          sta   AudSpd
+
+
+ldx #9-1
+- lda Info7,x     ; fix!!!
+sta $7B9,x         ; print audio playback speed
+dex
+bpl -
+
 
 ProRWTS2 jsr   init       ; sets up ProRWTS2, relocates itself to $1000
 
@@ -179,19 +212,20 @@ ProRWTS2 jsr   init       ; sets up ProRWTS2, relocates itself to $1000
          sty   auxreq
 
 RelocPlayer               ; y=0       
--        lda   Relocated,y
-         sta   Reloc,y    ; total < $400 bytes
-         lda   Relocated+$100,y
-         sta   Reloc+$100,y
-         lda   Relocated+$200,y
-         sta   Reloc+$200,y
-         lda   Relocated+$300,y
-         sta   Reloc+$300,y
+Move     lda   Relocated,y
+         sta   Reloc,y   
          dey
-         bne   -
+         bne   Move
+         inc   Move+2
+         inc   Move+5
+         lda   Move+5
+         cmp   #$10       ; stop moving at $1000
+         bne   Move
+
          jmp   Reloc
 
-C4_Parms                  ; GET_FILE_INFO ($C4) Parameters   --- will need to copy to Reloc
+
+InfoParms                 ; GET_FILE_INFO ($C4) Parameters   --- will need to copy to Reloc
          !byte   $0a      ; param_count
          !word   AudName  ; pathname
          !byte   0        ; access
@@ -204,7 +238,19 @@ C4_Parms                  ; GET_FILE_INFO ($C4) Parameters   --- will need to co
          !word   0        ; create_date
          !word   0        ; create_time
 
+         !xor   $80 {
+Info1    !text "PLAY.ZC.SYSTEM "
+Info2    !text "============== "
+Info3    !text "File:          "                     ; filename to $5AF
+Info4    !text "Filetype: $D8 (SND) 'Sampled Sound'"
+Info5    !text "Playback Speed:                    "
+Info6    !text "Now Playing Offset $               " ; offset #$ to $4E5
 
+Info7    !text "10,742 Hz"
+Info8    !text "8,797 Hz "
+Info9    !text "7,186 Hz "
+Info10   !text "5,899 Hz "
+         }
 
 
 ; ****************************************************************
@@ -220,9 +266,10 @@ Relocated
 
 
 Setup    lda   #$00       ; start address (low byte)
-  sta auxreq
+         sta   auxreq
          sta   GetNote+6
          ;sta   KeyPressed
+
          lda   #>Start    ; start address (high byte)
          sta   GetNote+7
          lda   #>Stop     ; stop address (high byte)
