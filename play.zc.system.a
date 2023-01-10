@@ -185,7 +185,7 @@ SetType  lda   InfoParms+5 ; low byte of aux_type is playback speed (see table)
          sta   AudSpd
 
 
-ldx #9-1
+ldx #18-1
 - lda Info7,x     ; fix!!!
 sta $7B9,x         ; print audio playback speed
 dex
@@ -246,10 +246,10 @@ Info4    !text "Filetype: $D8 (SND) 'Sampled Sound'"
 Info5    !text "Playback Speed:                    "
 Info6    !text "Now Playing Offset $               " ; offset #$ to $4E5
 
-Info7    !text "10,742 Hz"
-Info8    !text "8,797 Hz "
-Info9    !text "7,186 Hz "
-Info10   !text "5,899 Hz "
+Info7    !text "10,742 Hz (High)  "
+Info8    !text "8,797 Hz (Mid)    "
+Info9    !text "7,186 Hz (Default)"
+Info10   !text "5,899 Hz (Lo-fi)  "
          }
 
 
