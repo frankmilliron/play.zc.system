@@ -49,8 +49,9 @@
 
 ; TODO:
 ; Compute file size on load (EOF tracking)  idea: shift load address mid-page on final chunk so audio core stays balanced
-; check for correct filetype (which is?) $100x
+
 ; Save //gs accelerator speed on load - set slow to play - restore on exit
+; Save //gs background/border on load - set black to play - restore on exit
 ; //gs text page 2 fix - detect if Alternate Screen Mode is on
 ; key to toggle hires split screen / text visualizer?
 ; screen text on machines with no lowercase?
@@ -531,7 +532,7 @@ TestGS   sec
          rts              ; not a //gs, just exit
 
 SetGS    lda   #0
-         sta   SS_Border  ; turn border color black - store/restore?
+         sta   SS_Border  ; turn border & background colors black - store/restore?
 
          lda   SS_Speed
          and   #%01111111
