@@ -12,7 +12,7 @@ image=$outpath/$imagename
 prodos_path=/$prodos_vol
 
 aud_pathNEW=/Volumes/TRANSFER/New\ ZC\ Audio\ Files/2\ -\ ZC\ Audio\ Files
-aud_pathALL=/Volumes/TRANSFER/New\ ZC\ Audio\ Files/_All\ 2018\ ZC\ Files
+#aud_pathALL=/Volumes/TRANSFER/New\ ZC\ Audio\ Files/_All\ 2018\ ZC\ Files
 
 blank_img=/Volumes/TRANSFER/A2\ Disk\ Images/blank32mb.hdv.zip
 blank_unp=blank.hdv
@@ -50,7 +50,7 @@ cadius ADDFILE $image $prodos_vol "$A2binpath/PRODOS#FF0000"
 
 
 #cadius CHECKVOLUME $image
-cadius CATALOG $image
+#cadius CATALOG $image
 
 
 # open new disk image in Virtual ][

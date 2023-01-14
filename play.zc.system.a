@@ -60,7 +60,7 @@
 
 !cpu 6502
 !to "BASIS.SYSTEM#ff0000",plain
-!symbollist "BASIS.SYSTEM.list.txt"
+;!symbollist "BASIS.SYSTEM.list.txt"
 
 *=$2000
 
@@ -185,33 +185,33 @@ SetType  lda   InfoParms+5 ; low byte of aux_type is playback speed (see table) 
          sta   AudSpd
 
          cmp   #1
-         beq   PrintSpd   ; default sample rate
+         beq   Speed1     ; default sample rate
          cmp   #2
-         beq   Setup2
+         beq   Speed2
          cmp   #3
-         beq   Setup3
+         beq   Speed3
          cmp   #4
-         beq   Setup4
+         beq   Speed4
          jmp   Exit
 
-Setup2   lda   #<Info8
-         sta   PrintSpd+3
+Speed2   lda   #<Info8
+         sta   Speed1+3
          lda   #>Info8
-         sta   PrintSpd+4
-         jmp   PrintSpd
+         sta   Speed1+4
+         jmp   Speed1
 
-Setup3   lda   #<Info9
-         sta   PrintSpd+3 ; change to new sample rate text
+Speed3   lda   #<Info9
+         sta   Speed1+3   ; change to new sample rate text
          lda   #>Info9
-         sta   PrintSpd+4
-         jmp   PrintSpd
+         sta   Speed1+4
+         jmp   Speed1
 
-Setup4   lda   #<Info10
-         sta   PrintSpd+3
+Speed4   lda   #<Info10
+         sta   Speed1+3
          lda   #>Info10
-         sta   PrintSpd+4
+         sta   Speed1+4
 
-PrintSpd ldx   #18-1
+Speed1   ldx   #18-1
 -        lda   Info7,x    ; **self-modified!
          sta   $7B6,x     ; show playback sample rate
          dex
@@ -287,7 +287,7 @@ Relocated
 
          jsr   SetReset
 
-
+         jsr   TestGS     ; re-setup //gs border color & speed
 
 
 Setup    lda   #$00       ; start address (low byte)
@@ -531,30 +531,25 @@ TestGS   sec
          clc
          rts              ; not a //gs, just exit
 
-SetGS    lda   #0
-         sta   SS_Border  ; turn border & background colors black - store/restore?
+SetGS    ;lda   #0
+         ;sta   SS_Border  ; turn border & background colors black - store/restore?
 
          lda   SS_Speed
          and   #%01111111
          sta   SS_Speed   ; sets processor speed to normal  - store/restore?
 
-TestADM  tya              ; GS ID routine returns with ROM version in Y
-         cmp   #0         ; ROM 0?
-         beq   ++
-         cmp   #1         ; ROM 1?
-         beq   ++
-         lda   #$20
-         sta   $0800      ; Alternate Display Mode already on?
-         lda   #$FF
-         jsr   ROM_Wait   ; skip a VBL cycle
+         ldx   #0
+         lda   #$20       ; inverse space char
 !cpu 65816
-         lda   $E00800    ; If yes, we shadow copied to bank $E0
-         cmp   #$20
-         beq   +          ; only call TEXT2COPY if we know it's off
-!cpu 6502                 ; https://archive.org/details/develop-04_9010_October_1990/page/n51/mode/1up
-         jsr   ROM_Text2Copy         ; set Alternate Display Mode on IIgs
-+
-++       rts
+-        sta   $E00800,x  ; when Alternate Display Mode is turned off, the "2"s
+         sta   $E00900,x  ; displayed on the screen live at $E00800
+         sta   $E00A00,x  ; (page "2"/$0800 of IIgs bank $E0)
+         sta   $E00B00,x  ; They are initialized by the IIgs boot ROM
+         inx
+         bne   -
+!cpu 6502
+
+         rts
 
 
 ; ****************************************************************
