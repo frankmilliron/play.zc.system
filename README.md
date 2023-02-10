@@ -6,18 +6,23 @@ Have you ever wished your Apple could rock the party? Is your stereo system too 
 
 
 
+
+
 # Building the Project
 
-The project was written targeting macOS. The following were tested under macOS 12.6.3 "Monterey"
+The project was written targeting macOS. The following instructions were tested under macOS 12.6.3 "Monterey".
 
 Necessary Pieces that must be present:
- - [Xcode command line tools]
+ - [Xcode command line tools](https://developer.apple.com/xcode/features/)
+ - [ACME](https://sourceforge.net/projects/acme-crossass/)
+ - [Cadius](https://github.com/mach-kernel/cadius)
+
+
+To install the Xcode command line tools:
+
 ``` shell
 $ xcode-select --install
 ```
-
- - [ACME](https://sourceforge.net/projects/acme-crossass/)
- - [Cadius](https://github.com/mach-kernel/cadius)
 
 
 ACME and Cadius are installable via [Homebrew](https://brew.sh/).
@@ -26,6 +31,7 @@ ACME and Cadius are installable via [Homebrew](https://brew.sh/).
 $ brew tap lifepillar/appleii
 $ brew install acme parallel mach-kernel-cadius
 ```
+
 
 To build the project, enter the following.
 
