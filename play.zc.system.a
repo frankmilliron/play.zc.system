@@ -14,7 +14,7 @@
 ; https://groups.google.com/g/comp.sys.apple2.programmer/c/6MwH7Crkbbg/m/oU6NOZbqAQAJ
 
 ; Bugfix version January 1, 2023
-; The CMP ($00,X) instruction can accidentally ; access softswitches,
+; The CMP ($00,X) instruction can accidentally access softswitches,
 ; so has been replaced with 3 nops, at the expense of 1 byte.
 ; For compatibility with //gs, a non-ROM wait routine has also been added.
 
@@ -104,7 +104,6 @@ namlo          = $57      ; name of file to access
 namhi          = $58      ; name of file to access
 treeidx        = $5B      ; tree index
 blkindx        = $F8      ; block index
-;hddrdwrpart    = $1000    ; read part of file
 
 
 ; ****************************************************************

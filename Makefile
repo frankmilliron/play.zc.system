@@ -29,10 +29,10 @@ image:	# set up new disk image
 	cadius RENAMEVOLUME build/$(imagename) $(prodos_vol)
 
 
-		# add all audio file assets (Filetype $D8 - Auxtype $10xx)
-	fn=$(wildcard assets/*#D810*)
-	cadius ADDFILE build/$(imagename) /$(prodos_vol) $(fn)
-
+		# add all audio files in assets folder (Filetype $D8 - Auxtype $10xx)
+	for f in assets/*#D810* ; do \
+		cadius ADDFILE build/$(imagename) /$(prodos_vol) "$$f"; \
+	done
 
 
 		# add QUIT.SYSTEM to drop to BitsyBye on boot
