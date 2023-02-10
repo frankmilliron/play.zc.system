@@ -28,10 +28,11 @@ There should now be an MP3 file in the current working directory. Some videos ar
 
 The following playback bitrates are available, and are set in the player using the ProDOS filetype and auxtype. [CiderPress](https://a2ciderpress.com/)-style filenames are below. Select one to use before working with an audio file.
 
-#D81001 - 10,742 Hz (High)
-#D81002 - 8,797 Hz (Mid)
-#D81003 - 7,186 Hz (Default)
-#D81004 - 5,899 Hz (Lo-fi)
+ - #D81001 - 10,742 Hz (High)
+ - #D81002 - 8,797 Hz (Mid)
+ - #D81003 - 7,186 Hz (Default)
+ - #D81004 - 5,899 Hz (Lo-fi)
+
 
 Open your selected audio file in Audacity. We will need to convert the audio channels and bit rate to our target environment. Once open, navigate to "Tracks" --> "Mix" --> "Mix Stereo Down to Mono". Next, select "Tracks" --> "Resample..." and enter your target playback rate in the dialog box. Then, change the project bitrate to match. This is set in a small box in the bottom left corner of the waveform view that says "Project Rate (Hz)". Enter your bitrate there as well.
 
