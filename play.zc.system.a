@@ -13,17 +13,14 @@
 ; comp.sys.apple.2 - July 13, 2017
 ; https://groups.google.com/g/comp.sys.apple2.programmer/c/6MwH7Crkbbg/m/oU6NOZbqAQAJ
 
-; Bugfix version January 1, 2023: The CMP ($00,X) instruction can accidentally
-; access softswitches, so has been replaced with 3 nops, at the expense of 1 byte.
+; Bugfix version January 1, 2023
+; The CMP ($00,X) instruction can accidentally ; access softswitches,
+; so has been replaced with 3 nops, at the expense of 1 byte.
 ; For compatibility with //gs, a non-ROM wait routine has also been added.
-
-; "acme zc.player.a" to assemble
 
 
 ; ProDOS file format $D8 (SND) "Sampled Sound" audio files
-; Ciderpress-style  #d810xx  (xx = Playback speed)
-; #d81003 for default file playback
-
+; Ciderpress-style  #D810xx  (xx = Playback speed)
 
 ; Playback speed at 1,020,484.32 cycles per sec
 ; (calculated from cycle counting 2048 samples - 1 page)
@@ -59,8 +56,8 @@
 
 
 !cpu 6502
-!to "BASIS.SYSTEM#ff0000",plain
-;!symbollist "BASIS.SYSTEM.list.txt"
+!to "build/BASIS.SYSTEM#ff0000",plain
+!symbollist "build/BASIS.SYSTEM.list.txt"
 
 *=$2000
 
@@ -320,7 +317,7 @@ ClrPg2   sta   $800,x     ; preserve screen holes on page 2
 ; *                      Load Audio Segment                      *
 ; ****************************************************************
 
-         lda   #>AudSize  ; load some bytes  ---check for EOF here
+         lda   #>AudSize  ; load some bytes  ---check for EOF here/show segment info here
          sta   sizehi
          lda   #$20       ; do it starting at $2000
          sta   ldrhi
@@ -331,7 +328,7 @@ ClrPg2   sta   $800,x     ; preserve screen holes on page 2
 
 
 
-Loader   lda   #>AudSize  ; load some bytes  ---check for EOF here
+Loader   lda   #>AudSize  ; load some bytes  ---check for EOF here/show segment info here
          sta   sizehi
          lda   #$20       ; do it starting at $2000
          sta   ldrhi
@@ -369,7 +366,7 @@ ZCPlay   jmp   GetNote    ; X=0 here
 SamePage ldy   #8         ; bits per byte
 
 SameByte pha
-         lda   #3         ; playback speed
+         lda   #3         ; playback speed  **self-modified!
          jsr   FakeWait
          pla
          asl              ; shift bits into carry
