@@ -2,6 +2,10 @@
 
 Have you ever wished your Apple //, II, or ][ could rock the party? Is your stereo system too high fidelity? Have you found yourself hoping to listen to low bandwidth audio versions of your favorite 35-year-old songs on a 45-year-old home computer? If you answered yes to any of the above, this is your lucky day!
 
+Files can be launched directly from BitsyBye via the BASIS.SYSTEM format of [ProDOS 2.4.2](https://prodos8.com/releases/prodos-242/).
+
+Recent improvements in [Apple II Desktop](https://github.com/a2stuff/a2d) allow for showing an icon for ZC audio files, so grab a recent build for the best experience. Like BitsyBye, A2D supports the BASIS.SYSTEM format so files can be launched directly.
+
 
 # Creating Audio Files
 
