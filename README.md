@@ -100,7 +100,7 @@ $ make mount
 
 I would like to voice my appreciation for the help and contributions of the following pillars of the Apple II community for help, advice, and code over the years.
 
- - [Qkumba](https://github.com/peterferrie) for his lightning-fast ProRWTS2, the original audio player that started this project, as well as one of my favorite Apple II projects, [Total Replay](https://github.com/a2-4am/4cade).
+ - [Qkumba](https://github.com/peterferrie) for his lightning-fast [ProRWTS2](https://github.com/peterferrie/prorwts2), the original audio player that started this project, as well as one of my favorite Apple II projects, [Total Replay](https://github.com/a2-4am/4cade).
 
  - [Josh Bell](https://github.com/a2stuff) for help updating my WAV conversion workflow from an amazingly slow BASIC program (no joke!) to a modern perl implementation. Additional thanks for his amazing dissassembly and re-write of the [Apple II Desktop](https://www.a2desktop.com/), among other projects.
 
