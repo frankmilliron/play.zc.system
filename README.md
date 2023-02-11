@@ -44,14 +44,14 @@ We are now ready to prepare the audio for a low bandwidth environment. Trim any 
 
 Next, we will export the resulting audio. Select "File" --> "Export" --> "Export as WAV...". Make sure "Microsoft WAV" is the File Type, and that Encoding is set to "Signed 16-bit PCM". Hit Save. On the "Edit Metadata Tags" dialog box, click on "Clear" to remove any metadata tags so that they are not added to the file.
 
-To create a ZC Audio file from the exported WAV, use the "convert.pl" file in the "conversion" folder of the project, using the following syntax.
+To create a ZC Audio file from the exported WAV, use the `convert.pl` file in the `conversion` folder of the project, using the following syntax.
 
 ``` shell
-chmod a+x convert.pl
-./convert.pl < INFILE.wav > OUTFILE.zc
+$ chmod a+x convert.pl
+$ ./convert.pl < INFILE.wav > OUTFILE.zc
 ```
 
-Once you change OUTFILE.zc into something like OUTFILE#D81003 it can be added directly to the "assets folder" and will be automatically added to the resulting image file when the project is built.
+Once you change OUTFILE.zc into something like OUTFILE#D81003 it can be added directly to the `assets` folder and will be automatically added to the resulting image file when the project is built.
 
 
 
@@ -106,6 +106,6 @@ I would like to voice my appreciation for the help and contributions of the foll
 
  - [Qkumba](https://github.com/peterferrie) for his lightning-fast [ProRWTS2](https://github.com/peterferrie/prorwts2), the original audio player that started this project, as well as one of my favorite Apple II projects, [Total Replay](https://github.com/a2-4am/4cade).
 
- - [Josh Bell](https://github.com/a2stuff) for help updating my WAV conversion workflow from an amazingly slow BASIC program (no joke!) to a modern perl implementation. Additional thanks for his amazing dissassembly and re-write of the [Apple II Desktop](https://www.a2desktop.com/), among other projects.
+ - [Josh Bell](https://github.com/a2stuff) for help updating my WAV conversion workflow from an working but ridiculous BASIC program to a modern perl implementation. Additional thanks for his amazing dissassembly and re-write of the [Apple II Desktop](https://www.a2desktop.com/), among other projects.
 
  

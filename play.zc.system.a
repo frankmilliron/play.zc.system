@@ -53,6 +53,10 @@
 ; key to toggle hires split screen / text visualizer?
 ; screen text on machines with no lowercase?
 
+; Arrow keys for FF/Rew
+; Turn off Visualizer / Change to hires visualizer?
+; Progress Bar on bottom of screen
+
 
 
 !cpu 6502

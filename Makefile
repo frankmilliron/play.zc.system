@@ -1,6 +1,6 @@
 #
 # play.zc.system Makefile
-# Feb 9, 2023
+# Feb 10, 2023
 # "make all"
 #
 
@@ -14,13 +14,12 @@
 # current version 1.4.5
 
 
-# set up variables
+		# set up variables
 imagename=ZCJukebox2.hdv
 prodos_vol=ZCJKBX2
 
 V2config="/Users/$(USER)/Library/Application Support/Virtual ][/DefaultConfig.vii"
 current_dir = $(shell pwd)
-
 
 
 image:	# set up new disk image
@@ -31,7 +30,7 @@ image:	# set up new disk image
 
 		# add all audio files in assets folder (Filetype $D8 - Auxtype $10xx)
 	for f in assets/*#D810* ; do \
-		cadius ADDFILE build/$(imagename) /$(prodos_vol) "$$f"; \
+		cadius ADDFILE build/$(imagename) /$(prodos_vol) "$$f" ; \
 	done
 
 
@@ -48,7 +47,6 @@ image:	# set up new disk image
 	cadius ADDFILE build/$(imagename) /$(prodos_vol) bin/PRODOS#FF0000
 
 
-
 mount:	# open new disk image in Virtual ][
 	osascript -e 'tell app "Virtual ][" to close every machine saving no'
 	osascript -e 'tell app "Virtual ][" to open $(V2config)'
@@ -60,4 +58,6 @@ mount:	# open new disk image in Virtual ][
 clean:	# delete old builds
 	rm -rf build/ || rm -rf build
 
+
 all: clean image mount
+
