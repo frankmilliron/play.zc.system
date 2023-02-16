@@ -53,6 +53,8 @@ $ ./convert.pl < INFILE.wav > OUTFILE.zc
 
 Once you change OUTFILE.zc into something like OUTFILE#D81003 it can be added directly to the `assets` folder and will be automatically added to the resulting image file when the project is built.
 
+Keep in mind that ProDOS can only have 51 files in the root directory. With 3 files necessary to boot and run the program, that leaves 48 audio files that can be included.
+
 
 
 # Building the Project
@@ -104,8 +106,10 @@ $ make mount
 
 I would like to voice my appreciation for the help and contributions of the following pillars of the Apple II community for help, advice, and code over the years.
 
- - [Qkumba](https://github.com/peterferrie) for his lightning-fast [ProRWTS2](https://github.com/peterferrie/prorwts2), the original audio player that started this project, as well as one of my favorite Apple II projects, [Total Replay](https://github.com/a2-4am/4cade).
+ - [Qkumba](https://github.com/peterferrie) for his lightning-fast [ProRWTS2](https://github.com/peterferrie/prorwts2), the original audio player that started this project, as well as his work porting games for one of my favorite Apple II projects, [Total Replay](https://github.com/a2-4am/4cade).
 
- - [Josh Bell](https://github.com/a2stuff) for help updating my WAV conversion workflow from an working but ridiculous BASIC program to a modern perl implementation. Additional thanks for his amazing dissassembly and re-write of the [Apple II Desktop](https://www.a2desktop.com/), among other projects.
+ - [4am](https://github.com/a2-4am) for his part in Total Replay, as well as imaging & cracking thousands of disks, creating new games, and for the template for the build pipeline I'm using here.
+
+ - [Josh Bell](https://github.com/a2stuff) for help updating my WAV conversion workflow from an working but ridiculous BASIC program to a modern perl implementation. Additional thanks for his amazing dissassembly and re-write of the [Apple II Desktop](https://www.a2desktop.com), among other projects.
 
  
