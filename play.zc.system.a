@@ -46,6 +46,7 @@
 
 ; TODO:
 ; Compute file size on load (EOF tracking)  idea: shift load address mid-page on final chunk so audio core stays balanced
+; Show currently playing section (@ Info6)
 
 ; Save //gs accelerator speed on load - set slow to play - restore on exit
 ; Save //gs background/border on load - set black to play - restore on exit
@@ -175,11 +176,11 @@ GetAttributes
          lda   InfoParms+4 ; file_type must be $D8 "Sampled Sound"
          cmp   #$D8
          beq   AuxType
-         jmp   Exit+Reloc ; since we haven't relocated yet
+         jmp   Exit+Relocated-Reloc ; since we haven't relocated yet
 AuxType  lda   InfoParms+6 ; high byte of aux_type must be $10 ($10xx)
          cmp   #$10
          beq   SetType
-         jmp   Exit+Reloc ; since we haven't relocated yet
+         jmp   Exit+Relocated-Reloc ; since we haven't relocated yet
 
 SetType  lda   InfoParms+5 ; low byte of aux_type is playback speed (see table)  ---20b3
          sta   AudSpd
